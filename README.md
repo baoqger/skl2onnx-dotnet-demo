@@ -1,2 +1,2 @@
-# skl2onnx-dotnet-demo
-skl2onnx-dotnet-demo
+# practical-ml-net-onnx
+Integrating Scikit-learn ML Models with ML.NET Using ONNX
