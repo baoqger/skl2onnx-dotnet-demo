@@ -10,6 +10,8 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using Microsoft.ML.OnnxRuntime;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System;
 
 namespace LeadScoringONNXFunc
 {
@@ -24,20 +26,30 @@ namespace LeadScoringONNXFunc
             ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            var  modelParameters = JsonConvert.DeserializeObject<LeadModelParameters>(requestBody);
 
             // modelParameters is consist of all input features or body parameters sent via the POST body
-            float parameter = data?.modelParameters.parameterName;
+            // float parameter = data?.modelParameters.parameterName;
 
             // ONNX Model local path
-            var onnxModelPath = @"C:\Users\TestUser\Model.onnx";
+            var onnxModelPath = @"C:\develop\study\skl2onnx-dotnet-demo\Jupyter Notebook\LeadScoringModel.onnx";
 
             // Converting the LeadScoring input object into an object of type Tensor<float> so that we can pass it directly into the ONNX model
             // new int[] { 1, number of inputFeatures }
-            var inputTensor = new DenseTensor<float>(new float[] {
-                                                         parameter,
-                                                         },
-                                                         new int[] { 1, 1 });
+
+            Type type = typeof(LeadModelParameters);
+            PropertyInfo[] properties = type.GetProperties();
+            var parameters = new List<float> { };
+            foreach (PropertyInfo property in properties)
+            {
+                // Get property name
+                // string propName = property.Name;
+                // Get property value for the object 'person'
+                float value = (float)property.GetValue(modelParameters);
+                parameters.Add(value);
+            }
+
+            var inputTensor = new DenseTensor<float>(parameters.ToArray(), new int[] { 1, 22 });
 
             // 'feature_input' named in time of creating the ONNX format 
             var features_input = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor<float>("feature_input", inputTensor) };
